@@ -1,144 +1,149 @@
 package mvc.portlet.portlet;
 
+import com.liferay.counter.kernel.service.CounterLocalServiceUtil;
+import com.liferay.expando.kernel.service.ExpandoValueLocalServiceUtil;
+import com.liferay.journal.model.JournalArticle;
+import com.liferay.journal.service.JournalArticleLocalService;
+import com.liferay.mail.kernel.model.MailMessage;
+import com.liferay.mail.kernel.service.MailServiceUtil;
+import com.liferay.petra.string.CharPool;
+import com.liferay.petra.string.StringPool;
+import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
+import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.portlet.PortletPreferencesFactoryUtil;
+import com.liferay.portal.kernel.portlet.bridges.mvc.MVCPortlet;
+import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
+import com.liferay.portal.kernel.service.UserLocalServiceUtil;
+import com.liferay.portal.kernel.servlet.SessionErrors;
+import com.liferay.portal.kernel.servlet.SessionMessages;
+import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.util.Constants;
+import com.liferay.portal.kernel.util.FileUtil;
+import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.ParamUtil;
+import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portal.kernel.util.StringBundler;
+import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.kernel.util.WebKeys;
+
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.Statement;
-import java.util.ArrayList;
+import java.io.UnsupportedEncodingException;
+
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
+import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
+
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
 import javax.portlet.Portlet;
 import javax.portlet.PortletException;
 import javax.portlet.PortletPreferences;
-import javax.portlet.ResourceRequest;
-import javax.portlet.ResourceResponse;
-
-import com.liferay.counter.kernel.service.CounterLocalServiceUtil;
-import com.liferay.expando.kernel.model.ExpandoRow;
-import com.liferay.expando.kernel.service.ExpandoRowLocalServiceUtil;
-import com.liferay.expando.kernel.service.ExpandoValueLocalServiceUtil;
-import com.liferay.mail.kernel.model.MailMessage;
-import com.liferay.mail.kernel.service.MailServiceUtil;
-import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
-import com.liferay.portal.kernel.captcha.CaptchaTextException;
-import com.liferay.portal.kernel.captcha.CaptchaUtil;
-import com.liferay.portal.kernel.dao.orm.QueryUtil;
-import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.log.Log;
-import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.portlet.PortletPreferencesFactoryUtil;
-import com.liferay.portal.kernel.portlet.PortletResponseUtil;
-import com.liferay.portal.kernel.portlet.bridges.mvc.MVCPortlet;
-import com.liferay.portal.kernel.security.permission.ActionKeys;
-import com.liferay.portal.kernel.service.ServiceContext;
-import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
-import com.liferay.portal.kernel.service.UserLocalServiceUtil;
-import com.liferay.portal.kernel.service.permission.PortletPermissionUtil;
-import com.liferay.portal.kernel.servlet.SessionErrors;
-import com.liferay.portal.kernel.servlet.SessionMessages;
-import com.liferay.portal.kernel.theme.ThemeDisplay;
-import com.liferay.portal.kernel.util.CharPool;
-import com.liferay.portal.kernel.util.Constants;
-import com.liferay.portal.kernel.util.ContentTypes;
-import com.liferay.portal.kernel.util.FileUtil;
-import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.LocalizationUtil;
-import com.liferay.portal.kernel.util.ParamUtil;
-import com.liferay.portal.kernel.util.PortalUtil;
-import com.liferay.portal.kernel.util.StringBundler;
-import com.liferay.portal.kernel.util.StringPool;
-import com.liferay.portal.kernel.util.StringUtil;
-import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.kernel.util.WebKeys;
-
-import org.osgi.service.component.annotations.Activate;
-import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Modified;
+import javax.portlet.PortletSession;
+import javax.portlet.RenderRequest;
+import javax.portlet.RenderResponse;
 
 import mvc.portlet.configuration.FormPortletConfiguration;
 import mvc.portlet.constants.FormPortletKeys;
 import mvc.portlet.util.FormUtil;
 
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Modified;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author ibairuiz
  */
 @Component(
-	immediate = true,
 	configurationPid = FormPortletKeys.MVC_PORTLET_CONFIGURATION_PID,
+	immediate = true,
 	property = {
-				"com.liferay.portlet.display-category=category.sample",
-				"com.liferay.portlet.instanceable=true",
-				"javax.portlet.init-param.config-template=/configuration.jsp",
-				"javax.portlet.init-param.template-path=/",
-				"javax.portlet.init-param.view-template=/view.jsp",			
-				"javax.portlet.display-name=My MVC PORTLET",
-				"javax.portlet.name=" + FormPortletKeys.MVC_PORTLET_NAME,
-				"javax.portlet.resource-bundle=content.Language",
-				"javax.portlet.security-role-ref=power-user,user"
+		"com.liferay.portlet.display-category=category.sample",
+		"com.liferay.portlet.instanceable=true",
+		"javax.portlet.init-param.config-template=/configuration.jsp",
+		"javax.portlet.init-param.template-path=/",
+		"javax.portlet.init-param.view-template=/view.jsp",
+		"javax.portlet.display-name=My MVC PORTLET",
+		"javax.portlet.name=" + FormPortletKeys.MVC_PORTLET_NAME,
+		"javax.portlet.resource-bundle=content.Language",
+		"javax.portlet.security-role-ref=power-user,user"
 	},
 	service = Portlet.class
 )
 public class FormPortlet extends MVCPortlet {
 
+	@Override
+	public void doView(
+			RenderRequest renderRequest, RenderResponse renderResponse)
+		throws IOException, PortletException {
 
-	public void deleteData(
+		List<JournalArticle> journalArticleList =
+			_journalArticleLocalService.getArticles();
+
+		renderRequest.setAttribute(
+			"journalArticleURLTitleList",
+			journalArticleList.stream(
+			).map(
+				JournalArticle::getUrlTitle
+			).collect(
+				Collectors.toList()
+			));
+
+		super.doView(renderRequest, renderResponse);
+	}
+
+	@Override
+	public void processAction(
 			ActionRequest actionRequest, ActionResponse actionResponse)
-		throws Exception {
+		throws IOException, PortletException {
 
-		ThemeDisplay themeDisplay = (ThemeDisplay)actionRequest.getAttribute(
-			WebKeys.THEME_DISPLAY);
+		String command = ParamUtil.getString(actionRequest, Constants.CMD);
 
-		String portletId = PortalUtil.getPortletId(actionRequest);
+		long defaultUserId = 0;
 
-		PortletPermissionUtil.check(
-			themeDisplay.getPermissionChecker(), themeDisplay.getPlid(),
-			portletId, ActionKeys.CONFIGURATION);
+		ServiceContext serviceContext =
+			ServiceContextThreadLocal.getServiceContext();
 
-		PortletPreferences preferences =
-			PortletPreferencesFactoryUtil.getPortletSetup(actionRequest);
+		if (null == serviceContext) {
+			long companyId = PortalUtil.getDefaultCompanyId();
 
-		String databaseTableName = preferences.getValue(
-			"databaseTableName", StringPool.BLANK);
-		
-		
-		Connection conn = null;
-		Statement stmt = null;
-		try {
-		      Class.forName("com.mysql.jdbc.Driver");
+			try {
+				defaultUserId = UserLocalServiceUtil.getDefaultUserId(
+					companyId);
 
-		      System.out.println("Connecting to a selected database...");
-		      conn = DriverManager.getConnection(DB_URL, USER, PASS);
-		      System.out.println("Connected database successfully...");
-		      System.out.println("Creating statement...");
-		      stmt = conn.createStatement();
+				_log.debug(defaultUserId);
+			}
+			catch (Exception e) {
+				_log.error(e);
+			}
+		}
 
-		      String sql = "delete from ExpandoColumn where tableId = " + databaseTableName;
-			  stmt.execute(sql);
-		      sql = "delete from ExpandoRow where tableId = " + databaseTableName;
-			  stmt.execute(sql);
-			  
-		      sql = "delete from ExpandoValue where tableId = " + databaseTableName;
-			  stmt.execute(sql);
-		} 
-		catch (Exception e) {
-		      e.printStackTrace();
-		}				    
+		if (FormPortletKeys.CMD_SAVE.equals(command) && (defaultUserId == 0)) {
+			try {
+				saveData(actionRequest, actionResponse);
+			}
+			catch (Exception e) {
+				_log.error(e);
+			}
+		}
+
+		super.processAction(actionRequest, actionResponse);
 	}
 
 	public void saveData(
 			ActionRequest actionRequest, ActionResponse actionResponse)
 		throws Exception {
-
-		ThemeDisplay themeDisplay = (ThemeDisplay)actionRequest.getAttribute(
-			WebKeys.THEME_DISPLAY);
 
 		String portletId = PortalUtil.getPortletId(actionRequest);
 
@@ -146,16 +151,8 @@ public class FormPortlet extends MVCPortlet {
 			PortletPreferencesFactoryUtil.getPortletSetup(
 				actionRequest, portletId);
 
-		boolean c = GetterUtil.
-				getBoolean(
-			preferences.getValue(
-			"requireCaptcha", 
-			StringPool.BLANK));
-		String successURL =
-		GetterUtil.getString(
-		preferences.getValue(
-		"successURL", 
-		StringPool.BLANK));
+		String successURL = GetterUtil.getString(
+			preferences.getValue("successURL", StringPool.BLANK));
 		boolean sendAsEmail = GetterUtil.getBoolean(
 			preferences.getValue("sendAsEmail", StringPool.BLANK));
 		boolean saveToDatabase = GetterUtil.getBoolean(
@@ -167,39 +164,30 @@ public class FormPortlet extends MVCPortlet {
 		String fileName = GetterUtil.getString(
 			preferences.getValue("fileName", StringPool.BLANK));
 
-		if (c) {
-			try {
-				CaptchaUtil.check(actionRequest);
-			}
-			catch (CaptchaTextException cte) {
-				SessionErrors.add(
-					actionRequest, CaptchaTextException.class.getName());
-
-				return;
-			}
-		}
-
-		Map<String, String> f = new LinkedHashMap<String, String>();
+		Map<String, String> f = new LinkedHashMap<>();
 
 		for (int i = 1; true; i++) {
 			String fieldLabel = preferences.getValue(
 				"fieldLabel" + i, StringPool.BLANK);
 
-			String fieldType = preferences.getValue(
-				"fieldType" + i, StringPool.BLANK);
-
 			if (Validator.isNull(fieldLabel)) {
 				break;
 			}
+
+			String fieldType = preferences.getValue(
+				"fieldType" + i, StringPool.BLANK);
 
 			if (StringUtil.equalsIgnoreCase(fieldType, "paragraph")) {
 				continue;
 			}
 
-			f.put(fieldLabel, actionRequest.getParameter("field" + i));
+			f.put(fieldLabel, ParamUtil.getString(actionRequest, "field" + i));
 		}
-		
-		actionRequest.getPortletSession().setAttribute(SAVED_DATA_CACHE + System.currentTimeMillis(), f);
+
+		PortletSession portletSession = actionRequest.getPortletSession();
+
+		portletSession.setAttribute(
+			_SAVED_DATA_CACHE + System.currentTimeMillis(), f);
 
 		Set<String> e = null;
 
@@ -208,7 +196,7 @@ public class FormPortlet extends MVCPortlet {
 		}
 		catch (Exception ex) {
 			SessionErrors.add(
-				actionRequest, "validationScriptError", ex.getMessage().trim());
+				actionRequest, "validationScriptError", ex.getMessage());
 
 			return;
 		}
@@ -217,6 +205,9 @@ public class FormPortlet extends MVCPortlet {
 			boolean emailSuccess = true;
 			boolean databaseSuccess = true;
 			boolean fileSuccess = true;
+
+			ThemeDisplay themeDisplay =
+				(ThemeDisplay)actionRequest.getAttribute(WebKeys.THEME_DISPLAY);
 
 			if (sendAsEmail) {
 				emailSuccess = sendEmail(
@@ -240,11 +231,10 @@ public class FormPortlet extends MVCPortlet {
 			}
 
 			if (saveToFile) {
-				
-				if (!formPortletConfiguration.isDataFilePathChangeable()) {
+				if (!_formPortletConfiguration.isDataFilePathChangeable()) {
 					fileName = FormUtil.getFileName(themeDisplay, portletId);
 				}
-				
+
 				fileSuccess = saveFile(f, fileName);
 			}
 
@@ -277,142 +267,13 @@ public class FormPortlet extends MVCPortlet {
 		}
 	}
 
-	@Override
-	public void serveResource(
-		ResourceRequest resourceRequest, ResourceResponse resourceResponse) {
-
-		String cmd = ParamUtil.getString(resourceRequest, Constants.CMD);
-
-		try {
-			if (cmd.equals("captcha")) {
-				serveCaptcha(resourceRequest, resourceResponse);
-			}
-			else if (cmd.equals("export")) {
-				exportData(resourceRequest, resourceResponse);
-			}
-		}
-		catch (Exception e) {
-			_log.error(e, e);
-		}
+	@Activate
+	@Modified
+	protected void activate(Map<Object, Object> properties) {
+		_formPortletConfiguration = ConfigurableUtil.createConfigurable(
+			FormPortletConfiguration.class, properties);
 	}
 
-	protected void exportData(
-			ResourceRequest resourceRequest, ResourceResponse resourceResponse)
-		throws Exception {
-
-		ThemeDisplay themeDisplay = (ThemeDisplay)resourceRequest.getAttribute(
-			WebKeys.THEME_DISPLAY);
-
-		String portletId = PortalUtil.getPortletId(resourceRequest);
-
-		PortletPermissionUtil.check(
-			themeDisplay.getPermissionChecker(), themeDisplay.getPlid(),
-			portletId, ActionKeys.CONFIGURATION);
-
-		PortletPreferences preferences =
-			PortletPreferencesFactoryUtil.getPortletSetup(resourceRequest);
-
-		String databaseTableName = preferences.getValue(
-			"databaseTableName", StringPool.BLANK);
-		String title = preferences.getValue("title", "no-title");
-
-		StringBundler sb = new StringBundler();
-
-		List<String> fieldLabels = new ArrayList<String>();
-
-
-		for (int i = 1; true; i++) {
-			String fieldLabel = preferences.getValue(
-				"fieldLabel" + i, StringPool.BLANK);
-
-			String localizedfieldLabel = LocalizationUtil.getPreferencesValue(
-				preferences, "fieldLabel" + i, themeDisplay.getLanguageId());
-
-			if (Validator.isNull(fieldLabel)) {
-				break;
-			}
-
-			fieldLabels.add(fieldLabel);
-
-			sb.append(getCSVFormattedValue(localizedfieldLabel));
-			sb.append(formPortletConfiguration.csvSeparator());
-		}
-
-		sb.setIndex(sb.index() - 1);
-
-		sb.append(CharPool.NEW_LINE);
-
-		if (Validator.isNotNull(databaseTableName)) {
-			List<ExpandoRow> rows = ExpandoRowLocalServiceUtil.getRows(
-				themeDisplay.getCompanyId(), FormUtil.class.getName(),
-				databaseTableName, QueryUtil.ALL_POS, QueryUtil.ALL_POS);
-
-			for (ExpandoRow row : rows) {
-				for (String fieldName : fieldLabels) {
-					String data = ExpandoValueLocalServiceUtil.getData(
-						themeDisplay.getCompanyId(),
-						FormUtil.class.getName(), databaseTableName,
-						fieldName, row.getClassPK(), StringPool.BLANK);
-
-					sb.append(getCSVFormattedValue(data));
-					sb.append(formPortletConfiguration.csvSeparator());
-				}
-
-				sb.setIndex(sb.index() - 1);
-
-				sb.append(CharPool.NEW_LINE);
-			}
-		}
-
-		String fileName = title + ".csv";
-		byte[] bytes = sb.toString().getBytes();
-		String contentType = ContentTypes.APPLICATION_TEXT;
-
-		PortletResponseUtil.sendFile(
-			resourceRequest, resourceResponse, fileName, bytes, contentType);
-	}
-	@Override
-	public void processAction(ActionRequest actionRequest, ActionResponse actionResponse)
-			throws IOException, PortletException {
-				String p = actionRequest.getParameter("command");
-				long defaultUserId = 0;
-				ServiceContext serviceContext = ServiceContextThreadLocal.getServiceContext();
-				if (null == serviceContext) {
-
-				long companyId = PortalUtil.getDefaultCompanyId();
-				
-					try {
-						defaultUserId = UserLocalServiceUtil.getDefaultUserId(companyId);
-						System.out.println(defaultUserId);
-					} catch (Exception e) {
-						throw new PortletException();
-					}
-				}
-
-				if (p.equals("save")) {
-					if (defaultUserId != 0) {
-						try {
-							saveData(actionRequest, actionResponse);
-						} catch (Exception e) {
-							System.out.println("error");
-						}
-					}
-
-					
-				} else if (p == "delete") {
-					if (defaultUserId != 0) {
-						try {
-							saveData(actionRequest, actionResponse);	
-						} catch (Exception e) {
-							System.out.println("error");
-						}
-					}
-					
-				}
-	
-				
-		super.processAction(actionRequest, actionResponse);
-	}
 	protected String getCSVFormattedValue(String value) {
 		StringBundler sb = new StringBundler(3);
 
@@ -425,54 +286,47 @@ public class FormPortlet extends MVCPortlet {
 	}
 
 	protected String getMailBody(Map<String, String> fieldsMap) {
-		String mailBody = "";
+		StringBundler mailBodySB = new StringBundler(4);
 
-		for (String fieldLabel : fieldsMap.keySet()) {
-			String fieldValue = fieldsMap.get(fieldLabel);
+		for (Map.Entry<String, String> entry : fieldsMap.entrySet()) {
+			String fieldValue = entry.getValue();
 
-			mailBody += fieldLabel;
-			mailBody += " : ";
-			mailBody += fieldValue;
-			mailBody += CharPool.NEW_LINE;
+			mailBodySB.append(entry.getKey());
+			mailBodySB.append(" : ");
+			mailBodySB.append(fieldValue);
+			mailBodySB.append(CharPool.NEW_LINE);
 		}
 
-		return mailBody;
+		return mailBodySB.toString();
 	}
 
 	protected boolean saveDatabase(
 			long companyId, Map<String, String> fieldsMap,
 			PortletPreferences preferences, String databaseTableName)
-		throws Exception {
+		throws PortalException {
 
 		FormUtil.checkTable(companyId, databaseTableName, preferences);
 
 		long classPK = CounterLocalServiceUtil.increment(
 			FormUtil.class.getName());
 
-		try {
-			for (String fieldLabel : fieldsMap.keySet()) {
-				String fieldValue = fieldsMap.get(fieldLabel);
+		for (Map.Entry<String, String> entry : fieldsMap.entrySet()) {
+			String fieldValue = entry.getValue();
 
-				ExpandoValueLocalServiceUtil.addValue(
-					companyId, FormUtil.class.getName(), databaseTableName,
-					fieldLabel, classPK, fieldValue);
-			}
+			ExpandoValueLocalServiceUtil.addValue(
+				companyId, FormUtil.class.getName(), databaseTableName,
+				entry.getKey(), classPK, fieldValue);
+		}
 
-			return true;
-		}
-		catch (Exception e) {
-			throw new Exception(e);
-		}
+		return true;
 	}
 
 	protected boolean saveFile(Map<String, String> fieldsMap, String fileName) {
 		StringBundler sb = new StringBundler();
 
-		for (String fieldLabel : fieldsMap.keySet()) {
-			String fieldValue = fieldsMap.get(fieldLabel);
-
-			sb.append(getCSVFormattedValue(fieldValue));
-			sb.append(formPortletConfiguration.csvSeparator());
+		for (String value : fieldsMap.values()) {
+			sb.append(getCSVFormattedValue(value));
+			sb.append(_formPortletConfiguration.csvSeparator());
 		}
 
 		sb.setIndex(sb.index() - 1);
@@ -484,9 +338,10 @@ public class FormPortlet extends MVCPortlet {
 
 			return true;
 		}
-		catch (Exception e) {
+		catch (IOException ioe) {
+			_log.error(ioe);
 		}
-		
+
 		return false;
 	}
 
@@ -524,45 +379,47 @@ public class FormPortlet extends MVCPortlet {
 
 			return true;
 		}
-		catch (Exception e) {
-			System.out.println("error");
+		catch (AddressException | UnsupportedEncodingException e) {
+			_log.error(e);
 		}
-		
+
 		return false;
 	}
 
-	protected void serveCaptcha(
-			ResourceRequest resourceRequest, ResourceResponse resourceResponse)
-		throws Exception {
-
-		CaptchaUtil.serveImage(resourceRequest, resourceResponse);
-	}
-
 	protected Set<String> validate(
-			Map<String, String> fieldsMap, PortletPreferences preferences)
-		throws Exception {
+		Map<String, String> fieldsMap, PortletPreferences preferences) {
 
-		Set<String> validationErrors = new HashSet<String>();
-		
-		String debugMsg = "";
+		Set<String> validationErrors = new HashSet<>();
+
+		StringBundler debugMsgSB = new StringBundler();
 
 		for (int i = 0; i < fieldsMap.size(); i++) {
-			
 			String fieldType = preferences.getValue(
 				"fieldType" + (i + 1), StringPool.BLANK);
+
 			String fieldLabel = preferences.getValue(
 				"fieldLabel" + (i + 1), StringPool.BLANK);
+
 			String fieldValue = fieldsMap.get(fieldLabel);
 
 			boolean fieldOptional = GetterUtil.getBoolean(
 				preferences.getValue(
 					"fieldOptional" + (i + 1), StringPool.BLANK));
 
-			debugMsg += "Validating fieldType " + (i + 1) + ": " + fieldType;
-			debugMsg += "Validating fieldLabel " + (i + 1) + ": " + fieldLabel;
-			debugMsg += "Validating fieldOptional " + (i + 1) + ": " + fieldOptional;
-			
-			if (Validator.equals(fieldType, "paragraph")) {
+			debugMsgSB.append("Validating fieldType ");
+			debugMsgSB.append(i + 1);
+			debugMsgSB.append(": ");
+			debugMsgSB.append(fieldType);
+			debugMsgSB.append("Validating fieldLabel ");
+			debugMsgSB.append(i + 1);
+			debugMsgSB.append(": ");
+			debugMsgSB.append(fieldLabel);
+			debugMsgSB.append("Validating fieldOptional ");
+			debugMsgSB.append(i + 1);
+			debugMsgSB.append(": ");
+			debugMsgSB.append(fieldOptional);
+
+			if (Objects.equals("paragraph", fieldType)) {
 				continue;
 			}
 
@@ -573,46 +430,38 @@ public class FormPortlet extends MVCPortlet {
 
 				continue;
 			}
-			
-			if (!formPortletConfiguration.isValidationScriptEnabled()) {
+
+			if (!_formPortletConfiguration.isValidationScriptEnabled()) {
 				continue;
 			}
-			
+
 			String validationScript = GetterUtil.getString(
 				preferences.getValue(
 					"fieldValidationScript" + (i + 1), StringPool.BLANK));
 
 			if (Validator.isNotNull(validationScript) &&
-				!FormUtil.validate(
-					fieldValue, fieldsMap, validationScript)) {
+				!FormUtil.validate(fieldValue, fieldsMap, validationScript)) {
 
 				validationErrors.add(fieldLabel);
-				
-				debugMsg += validationErrors;
+
+				debugMsgSB.append(validationErrors);
 
 				continue;
 			}
-			
-			_log.debug(debugMsg);
+
+			_log.debug(debugMsgSB);
 		}
 
 		return validationErrors;
 	}
-	
-	@Activate
-	@Modified
-	protected void activate(Map<Object, Object> properties) {
-		formPortletConfiguration = ConfigurableUtil.createConfigurable(FormPortletConfiguration.class, properties);
-	}
-	
-	private FormPortletConfiguration formPortletConfiguration;
-	
+
+	private static final String _SAVED_DATA_CACHE = "FORM_SAVED_DATA_CACHE";
+
 	private static Log _log = LogFactoryUtil.getLog(FormPortlet.class);
-	
-	private static final String JDBC_DRIVER = "com.mysql.jdbc.Driver";  
-	private static final String DB_URL = "jdbc:mysql://localhost/FORM";
-	private static final String USER = "username";
-	private static final String PASS = "password";
-	
-	private static final String SAVED_DATA_CACHE = "FORM_SAVED_DATA_CACHE";	
+
+	private volatile FormPortletConfiguration _formPortletConfiguration;
+
+	@Reference
+	private JournalArticleLocalService _journalArticleLocalService;
+
 }
