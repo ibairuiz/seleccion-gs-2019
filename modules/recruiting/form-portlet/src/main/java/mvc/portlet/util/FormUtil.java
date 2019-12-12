@@ -70,33 +70,49 @@ public class FormUtil {
 		try {
 			DynamicQuery query = DynamicQueryFactoryUtil.forClass(ExpandoTable.class).add(PropertyFactoryUtil.forName("tableName").eq(tableName));
 			List<ExpandoTable> li=ExpandoTableLocalServiceUtil.dynamicQuery(query);			
+			
+			// AUDIT-FBO-COMMENT: There is duplicate code that can be mutualized inside of a private method
+			
 			if (li == null || li.size() == 0) {
+				// AUDIT-FBO-ADD
+				expandoTable = createTable(companyId, tableName, preferences);
+				// end AUDIT-FBO-ADD
+				
+				/*
+				 * AUDIT-FBO-REMOVE
 				expandoTable = addTable(companyId, tableName);
 
 				int i = 1;
-	
+
 				String fieldLabel = preferences.getValue(
 					"fieldLabel" + i, StringPool.BLANK);
 				String fieldType = preferences.getValue(
 					"fieldType" + i, StringPool.BLANK);
-	
+
 				while ((i == 1) || Validator.isNotNull(fieldLabel)) {
 					if (!StringUtil.equalsIgnoreCase(fieldType, "paragraph")) {
 						ExpandoColumnLocalServiceUtil.addColumn(
 							expandoTable.getTableId(), fieldLabel,
 							ExpandoColumnConstants.STRING);
 					}
-	
+
 					i++;
-	
+
 					fieldLabel = preferences.getValue(
 						"fieldLabel" + i, StringPool.BLANK);
 					fieldType = preferences.getValue(
 						"fieldType" + i, StringPool.BLANK);
-				}				
+				}
+				 */
 			}
 		}
 		catch (Exception nste) {
+			// AUDIT-FBO-ADD
+			expandoTable = createTable(companyId, tableName, preferences);
+			// end AUDIT-FBO-ADD
+			
+			/*
+			 * AUDIT-FBO-REMOVE
 			expandoTable = addTable(companyId, tableName);
 
 			int i = 1;
@@ -120,10 +136,43 @@ public class FormUtil {
 				fieldType = preferences.getValue(
 					"fieldType" + i, StringPool.BLANK);
 			}
+			 */
 		}
 
 		return expandoTable;
 	}
+	
+	// AUDIT-FBO-COMMENT: Deduplication of code in a new method
+	// AUDIT-FBO-ADD
+	private static ExpandoTable createTable(long companyId, String tableName, PortletPreferences preferences)
+			throws PortalException {
+		ExpandoTable expandoTable;
+		expandoTable = addTable(companyId, tableName);
+
+		int i = 1;
+
+		String fieldLabel = preferences.getValue(
+			"fieldLabel" + i, StringPool.BLANK);
+		String fieldType = preferences.getValue(
+			"fieldType" + i, StringPool.BLANK);
+
+		while ((i == 1) || Validator.isNotNull(fieldLabel)) {
+			if (!StringUtil.equalsIgnoreCase(fieldType, "paragraph")) {
+				ExpandoColumnLocalServiceUtil.addColumn(
+					expandoTable.getTableId(), fieldLabel,
+					ExpandoColumnConstants.STRING);
+			}
+
+			i++;
+
+			fieldLabel = preferences.getValue(
+				"fieldLabel" + i, StringPool.BLANK);
+			fieldType = preferences.getValue(
+				"fieldType" + i, StringPool.BLANK);
+		}
+		return expandoTable;
+	}
+	// end AUDIT-FBO-ADD
 
 	public static String getEmailFromAddress(
 			PortletPreferences preferences, long companyId)
