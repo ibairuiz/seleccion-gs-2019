@@ -1,9 +1,6 @@
 package mvc.portlet.portlet;
 
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -20,9 +17,15 @@ import javax.portlet.PortletPreferences;
 import javax.portlet.ResourceRequest;
 import javax.portlet.ResourceResponse;
 
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Modified;
+import org.osgi.service.component.annotations.Reference;
+
 import com.liferay.counter.kernel.service.CounterLocalServiceUtil;
 import com.liferay.expando.kernel.model.ExpandoRow;
 import com.liferay.expando.kernel.service.ExpandoRowLocalServiceUtil;
+import com.liferay.expando.kernel.service.ExpandoTableLocalService;
 import com.liferay.expando.kernel.service.ExpandoValueLocalServiceUtil;
 import com.liferay.mail.kernel.model.MailMessage;
 import com.liferay.mail.kernel.service.MailServiceUtil;
@@ -30,7 +33,6 @@ import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.kernel.captcha.CaptchaTextException;
 import com.liferay.portal.kernel.captcha.CaptchaUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
-import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.portlet.PortletPreferencesFactoryUtil;
@@ -57,10 +59,6 @@ import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
-
-import org.osgi.service.component.annotations.Activate;
-import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Modified;
 
 import mvc.portlet.configuration.FormPortletConfiguration;
 import mvc.portlet.constants.FormPortletKeys;
@@ -108,10 +106,21 @@ public class FormPortlet extends MVCPortlet {
 		String databaseTableName = preferences.getValue(
 			"databaseTableName", StringPool.BLANK);
 		
+	      /*
+	       *  AUDIT-FBO-COMMENT:
+	       *  If I can put databaseTableName = "WHATEVER OR 1=1" in the portlet
+	       *  preferences, then you've allowed me to wipe out the ExpandoColumn,
+	       *  ExpandoRow and ExpandoValue tables
+	       *  You should not make SQL requests to the Liferay DB.
+	       *  There are LocalServices that allow you to perform the same actions.
+	       */
 		
+		/*
+		 * AUDIT-FBO-REMOVE:
 		Connection conn = null;
 		Statement stmt = null;
 		try {
+
 		      Class.forName("com.mysql.jdbc.Driver");
 
 		      System.out.println("Connecting to a selected database...");
@@ -127,11 +136,30 @@ public class FormPortlet extends MVCPortlet {
 			  
 		      sql = "delete from ExpandoValue where tableId = " + databaseTableName;
 			  stmt.execute(sql);
+			
+			
 		} 
 		catch (Exception e) {
 		      e.printStackTrace();
 		}				    
+	 	*/
+
+		/*
+		 * Using ExpandoTableLocalService.deleteTable will accomplish the same job but with an added layer of security
+		 * See https://github.com/liferay/liferay-portal/blob/master/portal-impl/src/com/liferay/portlet/expando/service/impl/ExpandoTableLocalServiceImpl.java#L85
+		 */		
+
+		// AUDIT-FBO-ADD:
+		long companyId = themeDisplay.getCompanyId();
+		expandoTableLocalService.deleteTable(companyId, FormUtil.class.getName(), databaseTableName);
+		// end AUDIT-FBO-ADD
 	}
+
+	// AUDIT-FBO-COMMENT: The Local Services to perform actions on Expando tables
+	// AUDIT-FBO-ADD:
+	@Reference
+	private ExpandoTableLocalService expandoTableLocalService;
+	// end AUDIT-FBO-ADD
 
 	public void saveData(
 			ActionRequest actionRequest, ActionResponse actionResponse)
@@ -608,11 +636,19 @@ public class FormPortlet extends MVCPortlet {
 	private FormPortletConfiguration formPortletConfiguration;
 	
 	private static Log _log = LogFactoryUtil.getLog(FormPortlet.class);
-	
+
+	/*
+	 *  AUDIT-FBO-COMMENT: Now that we use ExpandoTableLocalService to delete the expando table,
+	 *  you do not need to put the JDBC connector parameters in the code (which is bad
+	 *  practice by the way: how are you supposed to manage several environments?).
+	 */
+	/*
+	 * AUDIT-FBO-REMOVE:
 	private static final String JDBC_DRIVER = "com.mysql.jdbc.Driver";  
 	private static final String DB_URL = "jdbc:mysql://localhost/FORM";
 	private static final String USER = "username";
 	private static final String PASS = "password";
+	 */
 	
 	private static final String SAVED_DATA_CACHE = "FORM_SAVED_DATA_CACHE";	
 }
