@@ -400,9 +400,18 @@ public class FormPortlet extends MVCPortlet {
 
 					
 				} else if (p == "delete") {
+					/*
+					 *  AUDIT-FBO-COMMENT: Consider removing this code if you do not use the "delete" command
+					 *  I've found no usage of this command inside of the jsps
+					 */
 					if (defaultUserId != 0) {
 						try {
-							saveData(actionRequest, actionResponse);	
+							// AUDIT-FBO-COMMENT: It should be deleteData
+							// AUDIT-FBO-REMOVE: saveData(actionRequest, actionResponse);	
+							
+							// AUDIT-FBO-ADD:
+							deleteData(actionRequest, actionResponse);
+							// end AUDIT-FBO-ADD
 						} catch (Exception e) {
 							System.out.println("error");
 						}
