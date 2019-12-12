@@ -50,10 +50,6 @@ import mvc.portlet.portlet.FormPortlet;
 )
 public class FormUtil {
 
-	// AUDIT-FBO-COMMENT: Use a Logger instead of System.out.println
-	// AUDIT-FBO-ADD:
-	private static final Logger LOG = LoggerFactory.getLogger(FormUtil.class);
-	// end AUDIT-FBO-ADD
 
 	public static ExpandoTable addTable(long companyId, String tableName)
 		throws PortalException, SystemException {
@@ -219,7 +215,7 @@ public class FormUtil {
 				// AUDIT-FBO-COMMENT: Use a logger and be more explicit about what you log
 				// AUDIT-FBO-REMOVE: ioe.printStackTrace();
 				// AUDIT-FBO-ADD: 
-				LOG.error("IO Exception while splitting line!", ioe);
+				_log.error("IO Exception while splitting line!", ioe);
 				// end AUDIT-FBO-ADD				
 				
 			}
@@ -304,7 +300,7 @@ public class FormUtil {
 			// AUDIT-FBO-COMMENT: Use a logger and be more explicit about what you log
 			// AUDIT-FBO-REMOVE: System.out.println(msg);
 			// AUDIT-FBO-ADD: 
-			LOG.error(msg);
+			_log.error(msg);
 			// end AUDIT-FBO-ADD				
 
 			throw new Exception(msg, e);

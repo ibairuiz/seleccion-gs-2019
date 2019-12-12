@@ -5,6 +5,8 @@ import javax.portlet.ActionResponse;
 import javax.portlet.PortletConfig;
 import javax.portlet.RenderParameters;
 
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.portlet.ConfigurationAction;
 import com.liferay.portal.kernel.portlet.DefaultConfigurationAction;
 import com.liferay.portal.kernel.util.ParamUtil;
@@ -31,7 +33,7 @@ extends DefaultConfigurationAction {
 
 	// AUDIT-FBO-COMMENT: Use a Logger instead of System.out.println
 	// AUDIT-FBO-ADD:
-	private static final Logger LOG = LoggerFactory.getLogger(FormPortletConfigurationAction.class);
+	private static final Log _log = LogFactoryUtil.getLog(FormPortletConfigurationAction.class);
 	// end AUDIT-FBO-ADD
 	
 	@Override
@@ -64,7 +66,7 @@ extends DefaultConfigurationAction {
 				// AUDIT-FBO-COMMENT: Use a logger and be more explicit about what you log
 				// AUDIT-FBO-REMOVE: System.out.println("not valid");
 				// AUDIT-FBO-ADD: 
-				LOG.error("Invalid email");
+				_log.error("Invalid email");
 				// end AUDIT-FBO-ADD	
 			
 					throw new Exception();
@@ -76,7 +78,7 @@ extends DefaultConfigurationAction {
 			// AUDIT-FBO-COMMENT: Use a logger and be more explicit about what you log
 			// AUDIT-FBO-REMOVE: System.out.println("begins 1");
 			// AUDIT-FBO-ADD: 
-			LOG.info("Email Address From begins with 1");
+			_log.info("Email Address From begins with 1");
 			// end AUDIT-FBO-ADD				
 		}
 		String dataRootDir = ParamUtil.getString(actionRequest, "dataRootDir");String emailFromName = ParamUtil.getString(actionRequest, "emailFromName");

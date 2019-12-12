@@ -23,8 +23,6 @@ import javax.portlet.ResourceResponse;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Modified;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.liferay.counter.kernel.service.CounterLocalServiceUtil;
 import com.liferay.expando.kernel.model.ExpandoRow;
@@ -89,10 +87,6 @@ import mvc.portlet.util.FormUtil;
 )
 public class FormPortlet extends MVCPortlet {
 
-	// AUDIT-FBO-COMMENT: Use a Logger instead of System.out.println
-	// AUDIT-FBO-ADD:
-	private static final Logger LOG = LoggerFactory.getLogger(FormPortlet.class);
-	// end AUDIT-FBO-ADD
 	
 	public void deleteData(
 			ActionRequest actionRequest, ActionResponse actionResponse)
@@ -121,19 +115,19 @@ public class FormPortlet extends MVCPortlet {
 
 		      // AUDIT-FBO-REMOVE: System.out.println("Connecting to a selected database...");
 		      // AUDIT-FBO-ADD:
-		      LOG.info("Connecting to a selected database...");
+		      _log.info("Connecting to a selected database...");
 		      // end AUDIT-FBO-ADD
 		      
 		      conn = DriverManager.getConnection(DB_URL, USER, PASS);
 		      
 		      // AUDIT-FBO-REMOVE: System.out.println("Connected database successfully...");
 		      // AUDIT-FBO-ADD:
-		      LOG.info("Connected database successfully...");
+		      _log.info("Connected database successfully...");
 		      // end AUDIT-FBO-ADD
 		      
 		      // AUDIT-FBO-REMOVE: System.out.println("Creating statement...");
 		      // AUDIT-FBO-ADD:
-		      LOG.info("Creating statement...");
+		      _log.info("Creating statement...");
 		      // end AUDIT-FBO-ADD
 
 		      stmt = conn.createStatement();
@@ -149,7 +143,7 @@ public class FormPortlet extends MVCPortlet {
 			// AUDIT-FBO-COMMENT: Better use a Logger
 			// AUDIT-FBO-REMOVE: e.printStackTrace();
 		      // AUDIT-FBO-ADD:
-		      LOG.error("Failed to delete data!", e);
+			_log.error("Failed to delete data!", e);
 		      // end AUDIT-FBO-ADD			
 		}				    
 	}
@@ -407,7 +401,7 @@ public class FormPortlet extends MVCPortlet {
 						// AUDIT-FBO-COMMENT: Use a logger and be more explicit about what you log
 						// AUDIT-FBO-REMOVE: System.out.println(defaultUserId);
 						// AUDIT-FBO-ADD: 
-						LOG.info("Default user Id: " + defaultUserId);
+						_log.info("Default user Id: " + defaultUserId);
 						// end AUDIT-FBO-ADD
 					} catch (Exception e) {
 						throw new PortletException();
@@ -422,7 +416,7 @@ public class FormPortlet extends MVCPortlet {
 							// AUDIT-FBO-COMMENT: Use a logger and be more explicit about what you log
 							// AUDIT-FBO-REMOVE: System.out.println("error");
 							// AUDIT-FBO-ADD: 
-							LOG.error("Error while trying to save data!");
+							_log.error("Error while trying to save data!");
 							// end AUDIT-FBO-ADD
 						}
 					}
@@ -436,7 +430,7 @@ public class FormPortlet extends MVCPortlet {
 							// AUDIT-FBO-COMMENT: Use a logger and be more explicit about what you log
 							// AUDIT-FBO-REMOVE: System.out.println("error");
 							// AUDIT-FBO-ADD: 
-							LOG.error("Error while trying to delete data!");
+							_log.error("Error while trying to delete data!");
 							// end AUDIT-FBO-ADD							
 						}
 					}
@@ -561,7 +555,7 @@ public class FormPortlet extends MVCPortlet {
 			// AUDIT-FBO-COMMENT: Use a logger and be more explicit about what you log
 			// AUDIT-FBO-REMOVE: System.out.println("error");
 			// AUDIT-FBO-ADD: 
-			LOG.error("Error while trying to send the email!");
+			_log.error("Error while trying to send the email!");
 			// end AUDIT-FBO-ADD
 		}
 		
