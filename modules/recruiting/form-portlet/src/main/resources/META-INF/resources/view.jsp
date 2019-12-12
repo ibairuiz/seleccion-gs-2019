@@ -37,6 +37,8 @@ try {
 
 					} 
 					catch (Exception e) {
+						// AUDIT-FBO-COMMENT: You should not System.out.println or even Log from a jsp
+						// AUDIT-FBO-COMMENT: See audit-1 for code improvement
 							System.out.println("error");
 					}
 %>	

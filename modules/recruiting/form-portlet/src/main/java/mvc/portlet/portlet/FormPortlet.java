@@ -20,6 +20,12 @@ import javax.portlet.PortletPreferences;
 import javax.portlet.ResourceRequest;
 import javax.portlet.ResourceResponse;
 
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Modified;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.liferay.counter.kernel.service.CounterLocalServiceUtil;
 import com.liferay.expando.kernel.model.ExpandoRow;
 import com.liferay.expando.kernel.service.ExpandoRowLocalServiceUtil;
@@ -30,7 +36,6 @@ import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.kernel.captcha.CaptchaTextException;
 import com.liferay.portal.kernel.captcha.CaptchaUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
-import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.portlet.PortletPreferencesFactoryUtil;
@@ -58,10 +63,6 @@ import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 
-import org.osgi.service.component.annotations.Activate;
-import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Modified;
-
 import mvc.portlet.configuration.FormPortletConfiguration;
 import mvc.portlet.constants.FormPortletKeys;
 import mvc.portlet.util.FormUtil;
@@ -88,7 +89,11 @@ import mvc.portlet.util.FormUtil;
 )
 public class FormPortlet extends MVCPortlet {
 
-
+	// AUDIT-FBO-COMMENT: Use a Logger instead of System.out.println
+	// AUDIT-FBO-ADD:
+	private static final Logger LOG = LoggerFactory.getLogger(FormPortlet.class);
+	// end AUDIT-FBO-ADD
+	
 	public void deleteData(
 			ActionRequest actionRequest, ActionResponse actionResponse)
 		throws Exception {
@@ -114,12 +119,24 @@ public class FormPortlet extends MVCPortlet {
 		try {
 		      Class.forName("com.mysql.jdbc.Driver");
 
-		      System.out.println("Connecting to a selected database...");
+		      // AUDIT-FBO-REMOVE: System.out.println("Connecting to a selected database...");
+		      // AUDIT-FBO-ADD:
+		      LOG.info("Connecting to a selected database...");
+		      // end AUDIT-FBO-ADD
+		      
 		      conn = DriverManager.getConnection(DB_URL, USER, PASS);
-		      System.out.println("Connected database successfully...");
-		      System.out.println("Creating statement...");
-		      stmt = conn.createStatement();
+		      
+		      // AUDIT-FBO-REMOVE: System.out.println("Connected database successfully...");
+		      // AUDIT-FBO-ADD:
+		      LOG.info("Connected database successfully...");
+		      // end AUDIT-FBO-ADD
+		      
+		      // AUDIT-FBO-REMOVE: System.out.println("Creating statement...");
+		      // AUDIT-FBO-ADD:
+		      LOG.info("Creating statement...");
+		      // end AUDIT-FBO-ADD
 
+		      stmt = conn.createStatement();
 		      String sql = "delete from ExpandoColumn where tableId = " + databaseTableName;
 			  stmt.execute(sql);
 		      sql = "delete from ExpandoRow where tableId = " + databaseTableName;
@@ -129,7 +146,11 @@ public class FormPortlet extends MVCPortlet {
 			  stmt.execute(sql);
 		} 
 		catch (Exception e) {
-		      e.printStackTrace();
+			// AUDIT-FBO-COMMENT: Better use a Logger
+			// AUDIT-FBO-REMOVE: e.printStackTrace();
+		      // AUDIT-FBO-ADD:
+		      LOG.error("Failed to delete data!", e);
+		      // end AUDIT-FBO-ADD			
 		}				    
 	}
 
@@ -383,7 +404,11 @@ public class FormPortlet extends MVCPortlet {
 				
 					try {
 						defaultUserId = UserLocalServiceUtil.getDefaultUserId(companyId);
-						System.out.println(defaultUserId);
+						// AUDIT-FBO-COMMENT: Use a logger and be more explicit about what you log
+						// AUDIT-FBO-REMOVE: System.out.println(defaultUserId);
+						// AUDIT-FBO-ADD: 
+						LOG.info("Default user Id: " + defaultUserId);
+						// end AUDIT-FBO-ADD
 					} catch (Exception e) {
 						throw new PortletException();
 					}
@@ -394,7 +419,11 @@ public class FormPortlet extends MVCPortlet {
 						try {
 							saveData(actionRequest, actionResponse);
 						} catch (Exception e) {
-							System.out.println("error");
+							// AUDIT-FBO-COMMENT: Use a logger and be more explicit about what you log
+							// AUDIT-FBO-REMOVE: System.out.println("error");
+							// AUDIT-FBO-ADD: 
+							LOG.error("Error while trying to save data!");
+							// end AUDIT-FBO-ADD
 						}
 					}
 
@@ -404,7 +433,11 @@ public class FormPortlet extends MVCPortlet {
 						try {
 							saveData(actionRequest, actionResponse);	
 						} catch (Exception e) {
-							System.out.println("error");
+							// AUDIT-FBO-COMMENT: Use a logger and be more explicit about what you log
+							// AUDIT-FBO-REMOVE: System.out.println("error");
+							// AUDIT-FBO-ADD: 
+							LOG.error("Error while trying to delete data!");
+							// end AUDIT-FBO-ADD							
 						}
 					}
 					
@@ -525,7 +558,11 @@ public class FormPortlet extends MVCPortlet {
 			return true;
 		}
 		catch (Exception e) {
-			System.out.println("error");
+			// AUDIT-FBO-COMMENT: Use a logger and be more explicit about what you log
+			// AUDIT-FBO-REMOVE: System.out.println("error");
+			// AUDIT-FBO-ADD: 
+			LOG.error("Error while trying to send the email!");
+			// end AUDIT-FBO-ADD
 		}
 		
 		return false;

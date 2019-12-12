@@ -18,4 +18,6 @@ dependencies {
 	compileOnly group: "org.osgi", name: "osgi.core", version: "5.0.0"
 	compileOnly group: "biz.aQute.bnd", name: "biz.aQute.bndlib", version: "3.5.0"	
 	compileOnly group: "com.liferay", name: "com.liferay.portal.configuration.metatype", version: "2.0.0"
+
+	compileOnly group: "org.slf4j", name: "slf4j-api", version: "1.7.25"
 }

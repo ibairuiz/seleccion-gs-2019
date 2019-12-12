@@ -13,11 +13,17 @@ import com.liferay.portal.kernel.util.WebKeys;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 @Component
 public class FormPortletDisplayContext {
 
+	// AUDIT-FBO-COMMENT: Use a Logger instead of System.out.println
+	// AUDIT-FBO-ADD:
+	private static final Logger LOG = LoggerFactory.getLogger(FormPortletDisplayContext.class);
+	// end AUDIT-FBO-ADD
 
     private ConfigurationProvider c;
     public FormPortletConfiguration getFormPortletConfiguration() {
@@ -43,7 +49,12 @@ public class FormPortletDisplayContext {
                 try {
             fpc = portletDisplay.getPortletInstanceConfiguration(FormPortletConfiguration.class);
                             } catch (Exception ce) {
-        ce.printStackTrace();
+                    			// AUDIT-FBO-COMMENT: Use a logger and be more explicit about what you log
+                    			// AUDIT-FBO-REMOVE: ce.printStackTrace();
+                    			// AUDIT-FBO-ADD: 
+                    			LOG.error("Error while getting portlet instance configuration", ce);
+                    			// end AUDIT-FBO-ADD				                            	
+        
         }
         }
     }

@@ -11,8 +11,11 @@ import com.liferay.portal.kernel.util.ParamUtil;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.ConfigurationPolicy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import mvc.portlet.constants.FormPortletKeys;
+import mvc.portlet.portlet.FormPortlet;
 
 /**
  * @author Liferay
@@ -26,6 +29,11 @@ import mvc.portlet.constants.FormPortletKeys;
 public class FormPortletConfigurationAction
 extends DefaultConfigurationAction {
 
+	// AUDIT-FBO-COMMENT: Use a Logger instead of System.out.println
+	// AUDIT-FBO-ADD:
+	private static final Logger LOG = LoggerFactory.getLogger(FormPortletConfigurationAction.class);
+	// end AUDIT-FBO-ADD
+	
 	@Override
 	public void processAction(
 			PortletConfig portletConfig,
@@ -52,14 +60,24 @@ extends DefaultConfigurationAction {
 			if (!emf.contains("@")) {
 			if (!emf.contains(".")) {
 			if (!(emf.contains("com") || !emf.contains("net") || !emf.contains("es"))) {
-			System.out.println("not valid");
+
+				// AUDIT-FBO-COMMENT: Use a logger and be more explicit about what you log
+				// AUDIT-FBO-REMOVE: System.out.println("not valid");
+				// AUDIT-FBO-ADD: 
+				LOG.error("Invalid email");
+				// end AUDIT-FBO-ADD	
+			
 					throw new Exception();
 					}
 				}
 			}
 		}
 		if (emf.startsWith("1")) {
-			System.out.println("begins 1");
+			// AUDIT-FBO-COMMENT: Use a logger and be more explicit about what you log
+			// AUDIT-FBO-REMOVE: System.out.println("begins 1");
+			// AUDIT-FBO-ADD: 
+			LOG.info("Email Address From begins with 1");
+			// end AUDIT-FBO-ADD				
 		}
 		String dataRootDir = ParamUtil.getString(actionRequest, "dataRootDir");String emailFromName = ParamUtil.getString(actionRequest, "emailFromName");
 		String isDataFilePathChangeable = ParamUtil.getString(actionRequest, "isDataFilePathChangeable");
