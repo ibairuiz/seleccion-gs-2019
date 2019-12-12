@@ -379,8 +379,18 @@ public class FormPortlet extends MVCPortlet {
 				ServiceContext serviceContext = ServiceContextThreadLocal.getServiceContext();
 				if (null == serviceContext) {
 
-				long companyId = PortalUtil.getDefaultCompanyId();
-				
+					/*
+					 *  AUDIT-FBO-COMMENT: You just don't have any idea which companyId this is going to return!
+					 *  You should get companyId from ThemeDisplay where the portlet has been deployed
+					 *  Otherwise you risk to end up messing with data from another Liferay instance
+					 */
+					// AUDIT-FBO-REMOVE: long companyId = PortalUtil.getDefaultCompanyId();
+					// AUDIT-FBO-ADD
+					ThemeDisplay themeDisplay = (ThemeDisplay)actionRequest.getAttribute(
+							WebKeys.THEME_DISPLAY);
+					long companyId = themeDisplay.getCompanyId();
+					// end AUDIT-FBO-ADD
+					
 					try {
 						defaultUserId = UserLocalServiceUtil.getDefaultUserId(companyId);
 						System.out.println(defaultUserId);
