@@ -3,14 +3,16 @@ package mvc.portlet.configuration;
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
 import javax.portlet.PortletConfig;
+import javax.portlet.PortletException;
 import javax.portlet.RenderParameters;
+
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.ConfigurationPolicy;
 
 import com.liferay.portal.kernel.portlet.ConfigurationAction;
 import com.liferay.portal.kernel.portlet.DefaultConfigurationAction;
 import com.liferay.portal.kernel.util.ParamUtil;
-
-import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.ConfigurationPolicy;
+import com.liferay.portal.kernel.util.Validator;
 
 import mvc.portlet.constants.FormPortletKeys;
 
@@ -35,7 +37,11 @@ extends DefaultConfigurationAction {
 
 		RenderParameters at = actionRequest.getRenderParameters();		
 		String emf = at.getValue("emailFromAddress");
-		for (int i = 0; i < emf.length(); i++){ 
+		
+		// AUDIT-FBO-COMMENT: This email verification algorithm makes no sense!
+/*
+ * AUDIT-FBO-REMOVE
+ 		for (int i = 0; i < emf.length(); i++){ 
 			if(emf.startsWith(" ")) {
 				String s = emf.substring(0, 1);
 				emf = s;
@@ -58,6 +64,15 @@ extends DefaultConfigurationAction {
 				}
 			}
 		}
+*/
+
+		// AUDIT-FBO-COMMENT: Why don't you use the Validator class?
+		// AUDIT-FBO-ADD
+		if(!Validator.isEmailAddress(emf)) {
+			throw new PortletException("Invalid email address");
+		}
+		// AUDIT-FBO-COMMENT: If you want to add controls to restrict to .com, .net and .es TLDs, add some endsWith tests on the emf string here
+		// end AUDIT-FBO-ADD
 		if (emf.startsWith("1")) {
 			System.out.println("begins 1");
 		}
