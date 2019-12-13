@@ -42,11 +42,20 @@ import org.osgi.service.component.annotations.Modified;
 import mvc.portlet.configuration.FormPortletConfiguration;
 import mvc.portlet.constants.FormPortletKeys;
 
+/*
+ * AUDIT-FBO-COMMENT: Modified from com.liferay.web.form.web.internal.util.WebFormUtil
+ * You should make it obvious why you duplicated that code and where your specific custom
+ * behaviour hides.
+ * Otherwise, you'll have problems when dealing with synchronization with original material
+ */
 @Component(
 	configurationPid = FormPortletKeys.MVC_PORTLET_CONFIGURATION_PID	
 )
 public class FormUtil {
 
+	/*
+	 * AUDIT-FBO-COMMENT: No functional change
+	 */
 	public static ExpandoTable addTable(long companyId, String tableName)
 		throws PortalException, SystemException {
 
@@ -61,6 +70,10 @@ public class FormUtil {
 			companyId, FormUtil.class.getName(), tableName);
 	}
 
+	/*
+	 * AUDIT-FBO-COMMENT: There is no obvious change with the behaviour of the original method
+	 * You should sync back with original
+	 */
 	public static ExpandoTable checkTable(
 			long companyId, String tableName, PortletPreferences preferences)
 		throws Exception {
@@ -125,6 +138,9 @@ public class FormUtil {
 		return expandoTable;
 	}
 
+	/*
+	 * AUDIT-FBO-COMMENT: Custom method
+	 */
 	public static String getEmailFromAddress(
 			PortletPreferences preferences, long companyId)
 		throws SystemException {
@@ -133,6 +149,9 @@ public class FormUtil {
 			preferences, companyId, formPortletConfiguration.emailFromAddress());
 	}
 
+	/*
+	 * AUDIT-FBO-COMMENT: No functional change
+	 */
 	public static String getEmailFromName(
 			PortletPreferences preferences, long companyId)
 		throws SystemException {
@@ -141,6 +160,10 @@ public class FormUtil {
 			preferences, companyId, formPortletConfiguration.emailFromName());
 	}
 
+	/*
+	 * AUDIT-FBO-COMMENT: Changed signature vs. original
+	 * Here, dataRootDir is fetched from the configuration
+	 */
 	public static String getFileName(
 		ThemeDisplay themeDisplay, String portletId) {
 
@@ -158,6 +181,9 @@ public class FormUtil {
 		return sb.toString();
 	}
 
+	/*
+	 * AUDIT-FBO-COMMENT: No functional change
+	 */
 	public static String getNewDatabaseTableName(String portletId)
 		throws SystemException {
 
@@ -167,6 +193,9 @@ public class FormUtil {
 		return portletId + StringPool.UNDERLINE + formId;
 	}
 
+	/*
+	 * AUDIT-FBO-COMMENT: No functional change
+	 */
 	public static int getTableRowsCount(long companyId, String tableName)
 		throws SystemException {
 
@@ -178,6 +207,9 @@ public class FormUtil {
 		return split(s, StringPool.COMMA);
 	}
 
+	/*
+	 * AUDIT-FBO-COMMENT: No functional change
+	 */
 	public static String[] split(String s, String delimiter) {
 		if ((s == null) || (delimiter == null)) {
 			return new String[0];
@@ -226,6 +258,9 @@ public class FormUtil {
 		return nodeValues.toArray(new String[nodeValues.size()]);
 	}
 
+	/*
+	 * AUDIT-FBO-COMMENT: No functional change
+	 */
 	public static boolean validate(
 			String currentFieldValue, Map<String, String> fieldsMap,
 			String validationScript)

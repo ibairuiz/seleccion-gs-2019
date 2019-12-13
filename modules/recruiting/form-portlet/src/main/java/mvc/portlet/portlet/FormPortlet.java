@@ -67,6 +67,12 @@ import mvc.portlet.constants.FormPortletKeys;
 import mvc.portlet.util.FormUtil;
 
 
+/*
+ * AUDIT-FBO-COMMENT: Modified from com.liferay.web.form.web.internal.portlet.WebFormPortlet
+ * You should make it obvious why you duplicated that code and where your specific custom
+ * behaviour hides.
+ * Otherwise, you'll have problems when dealing with synchronization with original material
+ */
 /**
  * @author ibairuiz
  */
@@ -88,7 +94,10 @@ import mvc.portlet.util.FormUtil;
 )
 public class FormPortlet extends MVCPortlet {
 
-
+	/*
+	 * AUDIT-FBO-COMMENT: Was altered but only to introduce a security vulnerability
+	 * (see audit-5)
+	 */
 	public void deleteData(
 			ActionRequest actionRequest, ActionResponse actionResponse)
 		throws Exception {
@@ -133,6 +142,11 @@ public class FormPortlet extends MVCPortlet {
 		}				    
 	}
 
+	/*
+	 * AUDIT-FBO-COMMENT: There is no obvious difference with the original saveData method
+	 * Try to recopy the original method body and make it clear what you modify and why
+	 * you did it
+	 */
 	public void saveData(
 			ActionRequest actionRequest, ActionResponse actionResponse)
 		throws Exception {
@@ -277,6 +291,9 @@ public class FormPortlet extends MVCPortlet {
 		}
 	}
 
+	/*
+	 * AUDIT-FBO-COMMENT: No change: same as original method
+	 */
 	@Override
 	public void serveResource(
 		ResourceRequest resourceRequest, ResourceResponse resourceResponse) {
@@ -296,6 +313,9 @@ public class FormPortlet extends MVCPortlet {
 		}
 	}
 
+	/*
+	 * AUDIT-FBO-COMMENT: No change: same as original method
+	 */
 	protected void exportData(
 			ResourceRequest resourceRequest, ResourceResponse resourceResponse)
 		throws Exception {
@@ -371,6 +391,12 @@ public class FormPortlet extends MVCPortlet {
 		PortletResponseUtil.sendFile(
 			resourceRequest, resourceResponse, fileName, bytes, contentType);
 	}
+	
+	/*
+	 * AUDIT-FBO-COMMENT: This is custom code
+	 * You should create a MVCActionCommand in a separate Java file
+	 * so as to clearly separate this from WebFormPortlet
+	 */
 	@Override
 	public void processAction(ActionRequest actionRequest, ActionResponse actionResponse)
 			throws IOException, PortletException {
@@ -413,6 +439,10 @@ public class FormPortlet extends MVCPortlet {
 				
 		super.processAction(actionRequest, actionResponse);
 	}
+	
+	/*
+	 * AUDIT-FBO-COMMENT Same as original method
+	 */
 	protected String getCSVFormattedValue(String value) {
 		StringBundler sb = new StringBundler(3);
 
@@ -424,6 +454,9 @@ public class FormPortlet extends MVCPortlet {
 		return sb.toString();
 	}
 
+	/*
+	 * AUDIT-FBO-COMMENT Functionally the same as original method
+	 */
 	protected String getMailBody(Map<String, String> fieldsMap) {
 		String mailBody = "";
 
@@ -439,6 +472,9 @@ public class FormPortlet extends MVCPortlet {
 		return mailBody;
 	}
 
+	/*
+	 * AUDIT-FBO-COMMENT: No functional change
+	 */
 	protected boolean saveDatabase(
 			long companyId, Map<String, String> fieldsMap,
 			PortletPreferences preferences, String databaseTableName)
@@ -465,6 +501,9 @@ public class FormPortlet extends MVCPortlet {
 		}
 	}
 
+	/*
+	 * AUDIT-FBO-COMMENT: No functional change
+	 */
 	protected boolean saveFile(Map<String, String> fieldsMap, String fileName) {
 		StringBundler sb = new StringBundler();
 
@@ -490,6 +529,9 @@ public class FormPortlet extends MVCPortlet {
 		return false;
 	}
 
+	/*
+	 * AUDIT-FBO-COMMENT: No functional change
+	 */
 	protected boolean sendEmail(
 		long companyId, Map<String, String> fieldsMap,
 		PortletPreferences preferences) {
@@ -531,6 +573,9 @@ public class FormPortlet extends MVCPortlet {
 		return false;
 	}
 
+	/*
+	 * AUDIT-FBO-COMMENT: No functional change
+	 */
 	protected void serveCaptcha(
 			ResourceRequest resourceRequest, ResourceResponse resourceResponse)
 		throws Exception {
@@ -538,6 +583,9 @@ public class FormPortlet extends MVCPortlet {
 		CaptchaUtil.serveImage(resourceRequest, resourceResponse);
 	}
 
+	/*
+	 * AUDIT-FBO-COMMENT: Added debug
+	 */
 	protected Set<String> validate(
 			Map<String, String> fieldsMap, PortletPreferences preferences)
 		throws Exception {
