@@ -399,7 +399,10 @@ public class FormPortlet extends MVCPortlet {
 					}
 
 					
-				} else if (p == "delete") {
+// AUDIT-FBO-REMOVE				} else if (p == "delete") {
+					// AUDIT-FBO-ADD
+				} else if (p.equals("delete")) {
+					// end AUDIT-FBO-ADD
 					if (defaultUserId != 0) {
 						try {
 							saveData(actionRequest, actionResponse);	
