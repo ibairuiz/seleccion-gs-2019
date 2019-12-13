@@ -3,6 +3,7 @@ package mvc.portlet.portlet;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -17,8 +18,14 @@ import javax.portlet.ActionResponse;
 import javax.portlet.Portlet;
 import javax.portlet.PortletException;
 import javax.portlet.PortletPreferences;
+import javax.portlet.RenderRequest;
+import javax.portlet.RenderResponse;
 import javax.portlet.ResourceRequest;
 import javax.portlet.ResourceResponse;
+
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Modified;
 
 import com.liferay.counter.kernel.service.CounterLocalServiceUtil;
 import com.liferay.expando.kernel.model.ExpandoRow;
@@ -30,7 +37,6 @@ import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.kernel.captcha.CaptchaTextException;
 import com.liferay.portal.kernel.captcha.CaptchaUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
-import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.portlet.PortletPreferencesFactoryUtil;
@@ -58,10 +64,6 @@ import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 
-import org.osgi.service.component.annotations.Activate;
-import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Modified;
-
 import mvc.portlet.configuration.FormPortletConfiguration;
 import mvc.portlet.constants.FormPortletKeys;
 import mvc.portlet.util.FormUtil;
@@ -88,7 +90,39 @@ import mvc.portlet.util.FormUtil;
 )
 public class FormPortlet extends MVCPortlet {
 
+	/*
+	 * AUDIT-FBO-COMMENT
+	 * Extracted code from JSP which has been simplified through the use of JSTL
+	 */
+	// AUDIT-FBO-ADD
+	@Override
+	public void doView(RenderRequest renderRequest, RenderResponse renderResponse)
+			throws IOException, PortletException {
 
+		Connection conn = null;
+		Statement stmt = null;
+		try {
+			/*
+			 *  AUDIT-FBO-COMMENT:
+			 * This is still bad because it carries environment specific JDBC URL
+			 * What's this DB by the way?
+			 * You should use JournalArticleLocalService if you wish to access
+			 * Journal articles from the liferay DB 
+			 */			
+			Class.forName("com.mysql.jdbc.Driver");
+			conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/demo_omnichannel71", "root", "root");
+			stmt = conn.createStatement();
+			String sqlQuery = "select * from journalarticle";
+			ResultSet rs = stmt.executeQuery(sqlQuery);
+			renderRequest.setAttribute("urlTitles", rs.getArray("urlTitle"));
+		} catch (Exception e) {
+			_log.error("Error while getting journal articles");
+		}
+
+		super.doView(renderRequest, renderResponse);
+	}
+	// end AUDIT-FBO-ADD
+	
 	public void deleteData(
 			ActionRequest actionRequest, ActionResponse actionResponse)
 		throws Exception {

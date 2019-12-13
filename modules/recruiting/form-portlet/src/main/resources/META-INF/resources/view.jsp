@@ -19,28 +19,9 @@
 
 	<aui:fieldset>
 
-<%
-Connection conn = null;
-Statement stmt = null;
-try {
-		Class.forName("com.mysql.jdbc.Driver");
-		conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/demo_omnichannel71", "root", "root");
-		stmt = conn.createStatement();
-		String sqlQuery = "select * from journalarticle";
-		ResultSet rs = stmt.executeQuery(sqlQuery);
-	int i = 0;
-		while(rs.next()){
-			i++;
-		String t = rs.getString("urlTitle");
-		String field = "field" + i;
-%><h1>URL: <%=t%></h1><aui:input name="<%=field%>" placeholder="<%=t%>" type="text"/><%}			  
-
-					} 
-					catch (Exception e) {
-							System.out.println("error");
-					}
-%>	
-
+		<c:forEach items="${urlTitles}" var="urlTitle" varStatus="status">
+			<h1>URL: ${urlTitle}</h1><aui:input name="field${status.count}" placeholder="${urlTitle}" type="text"/>	
+		</c:forEach>
 
 	</aui:fieldset>
 
